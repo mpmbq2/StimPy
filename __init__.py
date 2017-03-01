@@ -22,8 +22,8 @@ class DataSet(Experiment):
                     df = pd.read_csv(os.path.join(root, f))
                     self.meta.append(df)
 
-        # Initialize neurons with genotype info
-        # Associate files with pairs
+        # TODO: Initialize neurons with genotype info
+        # TODO: Associate files with pairs
         # Anything else?
 
 
