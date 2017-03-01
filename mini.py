@@ -11,7 +11,7 @@ def _epsc_template(points=None):
     :return: ndarray
         1-D numpy array of length (points) containing the epsc waveform
     '''
-    if points == None
+    if points is None:
         points = 100
     time = np.linspace(1, points, num=points)
     temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 6) for t in time])
@@ -33,7 +33,6 @@ def _ipsc_template(points=None):
         points = 100
     time = np.linspace(1, points, num=points)
     temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 30) for t in time])
-
     return -temp
 
 
@@ -64,7 +63,7 @@ def detection(trace, template=None):
         return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
     windows = rolling_window(trace, len(temp))
-    detection = np.empty(trace.shape)
+    detection_threshold = np.empty(trace.shape)
 
     for idx, data in enumerate(windows):
         scale = (np.sum((temp * data)) - np.sum(temp) * (np.sum(data)/len(temp)))/(np.sum((temp**2)) - np.sum(temp) * (np.sum(temp)/len(temp)))
@@ -72,7 +71,7 @@ def detection(trace, template=None):
         fitted = temp * scale + offset
         sse = np.sum((data - fitted)**2)
         error = (sse/(len(temp)-1))**1/2
-        detection[idx] = scale/error
+        detection_threshold[idx] = scale/error
 
 
 def extraction(trace, event_indicies):
