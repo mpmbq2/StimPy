@@ -1,10 +1,10 @@
 import numpy as np
-import stimfit as stf
-import stfio
 import pandas as pd
+import neo
+import bokeh
 
 def main(path):
-    '''Guided registration of stimulation artifact and PSC duration for automated analysis'''
+    '''Guided registration of stimulation artifact and PSC duration in Bokeh for automated analysis'''
     
     # Step 1: load metadata from DataSet object in <path>
     # Step 2: Find the 'baseline' file for each recorded pair
