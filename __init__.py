@@ -16,8 +16,8 @@ class DataSet(Experiment):
             self.type = input('Please input an experiment type (single, pair): ')
         else:
             self.type = type
-        self.pair_locations = list()
         self.cells = list()
+        self.pair_locations = list()
 
     def initialize(self, parent_directory):
 
@@ -34,20 +34,13 @@ class DataSet(Experiment):
                         self.pair_locations.append(save_dir)
 
                         data_files = df.file[df.pair == p]
-                        # Read in the baseline .abf file with neo
-                        # Convert to ndarray
-                        # Separate the channels
-                        # Save the channels as .npy files
+                        # TODO: Read in the baseline .abf file with neo (and check for possible header info)
+                        # TODO: Convert to ndarray
+                        # TODO: Separate the channels
+                        # TODO: Save the channels as .npy files
 
                     #Last thing to do with meta.csv file is to append to master meta DataFrame
                     self.meta.append(df)
-
-
-
-
-        # TODO: Initialize neurons with genotype info
-        # TODO: Associate files with pairs
-        # Anything else?
 
 
 class NeuronPair:
