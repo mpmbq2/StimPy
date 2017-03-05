@@ -1,90 +1,11 @@
 import os
 import pandas as pd
-from sqlalchemy import Integer, ForeignKey, Column, Table, String
+from sqlalchemy import Integer, ForeignKey, Column, Table, String, Binary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
-neuron_file_association = Table('neuron_file_association', Base.metadata,
-                                Column('neuron_id', Integer, ForeignKey('neuron.id')),
-                                Column('file_id', Integer, ForeignKey('abf_file.id')))
-
-Pair
-    - ID (1)
-
-File
-    - ID
-    - Pair_ID (1)
-    - Name
-    - Type
-    - Channel1 (neuron_id = 1)
-    - Channel2 (neuron_id = 2)
-
-Data
-    - ID
-    - File
-    - (int) channel_number
-    - data_array
-
-Neuron
-    - ID
-    - genome
-    - trans
-    - PSC Name
-    - Pair
-    -File
-
-neurons = []
-for neuron, in session.query(Neuron).join(File, on(channel1, Neuron.id).filter(genome = 'potato'):
-    neurons.push(neuron)
-
-
-
-File -> X Segments  ->  Channel vector
-                    ->  Channel vector
-
-File    ->  Channel array
-        ->  Channel array
-
-Pair    ->  Neuron
-        ->  Neuron
-
-SELECT data_array
-FROM Channel
-    Join Neuron ON Neuron.id = Channel.Neuron_id
-    Join File ON File.id = Channel.file_id
-WHERE
-    Neuron.genome = 'gaba'
-    AND neuron.trans = 'potato'
-
-
-
-
-Segment
-    - ID
-    -file_id
-    -order
-    - mark
-    - max
-
-Neuron
-    - ID
-    - Genome
-    - Trans
-    - File_1 -> AT -> File
-
-SELECT *
-FROM PSC
-    JOIN Neuron ON Neuron.ID = PSC.Neuron_ID
-    JOIN Pair ON Pair.neuron = neuron.id
-    JOIN File ON Pair.id = File.pair_id
-WHERE Neuron.trans = 'gaba'\
-    AND File.Type = 'Dyno';
-
-(Pair.channel_1.type =='gaba' && Pair.channel.type == 'glu') || (Pair.channel[0].type =='glu' && Pair.channel[1].type == 'gaba')
-
-Test.Neuron_Channel[0]
 
 class Pair(Base):
     '''A class that will relate neurons to each other'''
@@ -92,8 +13,8 @@ class Pair(Base):
     __tablename__ = 'pairs'
 
     id = Column(Integer, primary_key=True)
-    neuron_1 = relationship('Neuron')
-    neuron_2 = relationship('Neuron')
+    neurons = relationship('Neuron', back_populates='pair')
+    abf_files = relationship('AbfFiles', back_populates='pair')
 
 
 class Neuron(Base):
@@ -103,10 +24,10 @@ class Neuron(Base):
     __tablename__ = 'neurons'
 
     id = Column(Integer, primary_key=True)
-    abf_files = relationship('AbfFile', secondary='neuron_file_association', back_populates='neurons')
     transmitter = Column(String, nullable=True)
     genotype = Column(String, nullable=False)
-    # pair_id = Column(Integer, ForeignKey('pairs.id'))
+    pair_id = Column(Integer, ForeignKey('pairs.id'))
+    signal = relationship('AnalogData', back_populates='neuron')
 
 
 class AbfFile(Base):
@@ -116,19 +37,24 @@ class AbfFile(Base):
     __tablename__ = 'abf_files'
 
     id = Column(Integer, primary_key=True)
-    pair_id = relationship('Pair')
+    pair_id = Column(Integer, ForeignKey('pairs.id'))
+    pair = relationship("Pair", back_populates="pair")
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)
     # channel1_units = Column(String, nullable=False)
     # channel2_units = Column(String, nullable=False)# Could go in a Channel object?
     sample_rate = Column(Integer, nullable=False)
-    neurons = relationship('Neuron', secondary='neuron_file_association', back_populates='abf_files')
+    signal = relationship('AnalogData', back_populates='abf_file')
     # channels = Column(Integer, nullable=False)
 
-class Channel(Base):
+class AnalogData(Base):
     # SqlAlchemy Initialization
-    __tablename__ = 'abf_files'
+    __tablename__ = 'analog_data'
 
     id = Column(Integer, primary_key=True)
-    file_id = relationship('Segment')
+    file_id = Column(Integer, ForeignKey('abf_files.id'))
+    neuron_id = Column(Integer, ForeignKey('neurons.id'))
+    units = Column(String, nullable=False)
+    signal = Column(Binary, nullable=False)
+    time = Column(Binary, nullable=False)
 
