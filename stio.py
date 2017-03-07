@@ -2,7 +2,7 @@ from neo.io import AxonIO
 import numpy as np
 
 
-def abf_import(path):
+def read_abf(path):
 
     # Read abf file with neo
     reader = AxonIO(filename=path)

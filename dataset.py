@@ -1,5 +1,9 @@
 import pandas as pd
 import os
+from classes import NeuronPair
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 
 class DataSet:
@@ -14,28 +18,34 @@ class DataSet:
         self.cells = list()
         self.pair_locations = list()
 
-    def initialize(self, parent_directory):
+    def new(self, parent_directory):
 
         # Find all the metadata
         for root, _, files in os.walk(parent_directory):
             for f in files:
                 if f == 'meta.csv':
                     df = pd.read_csv(os.path.join(root, f))
-                    # create cell objects from meta
-                    pairs = df['pair'].unique()
-                    for p in pairs:
-                        save_dir = os.path.join(root, 'pair_{0}'.format(p))
-                        os.makedirs(save_dir)
-                        self.pair_locations.append(save_dir)
+                    sub_df = self._parse_meta(df)
+                    pair = NeuronPair()
 
-                        data_files = df.file[df.pair == p]
-                        # TODO: Read in the baseline .abf file with neo (and check for possible header info)
-                        # TODO: Convert to ndarray
-                        # TODO: Separate the channels
-                        # TODO: Save the channels as .npy files
 
-                    # Last thing to do with meta.csv file is to append to master meta DataFrame
-                    self.meta.append(df)
+
+                    #
+                    # # create cell objects from meta
+                    # pairs = df['pair'].unique()
+                    # for p in pairs:
+                    #
+                    #
+                    #
+                    #
+                    #     data_files = df.file[df.pair == p]
+                    #
+                    # # Last thing to do with meta.csv file is to append to master meta DataFrame
+                    # self.meta.append(df)
+
+    def _parse_meta(self, df_in):
+        df_out = df_in[(df_in.pair == p for p in df_in['pair'].unique())]
+        yield df_out
 
     def load_database(self, db_path):
         pass
