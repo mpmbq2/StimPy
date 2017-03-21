@@ -24,20 +24,21 @@ def read_abf(path):
     #             'channel1': channel1,
 
     elif len(block[0].segments[0].analogsignals) == 2:
-        channel1 = np.empty(block[0].segments[0].analogsignals[0].shape)
+        channel1 = np.empty((len(block[0].segments), block[0].segments[0].analogsignals[0].size))
         channel1_units = block[0].segments[0].analogsignals[0].units
-        channel2 = np.empty(block[0].segments[0].analogsignals[0].shape)
+        channel2 = np.empty((len(block[0].segments), block[0].segments[0].analogsignals[1].size))
         channel2_units = block[0].segments[0].analogsignals[0].units
         t = block[0].segments[0].analogsignals[0].times.magnitude
         for idx, seg in enumerate(block[0].segments):
             channel1[idx] = seg.analogsignals[0].T
             channel2[idx] = seg.analogsignals[1].T
-
+            #channel1[idx] = seg.analogsignals[0]
+            #channel2[idx] = seg.analogsignals[1]
     else:
         raise Exception('File {0} either has too many channels, or no channels.'.format(path))
 
-    return {'file_name': block.file_origin,
-            'recording_date': block.rec_datetime,
+    return {'file_name': block[0].file_origin,
+            'recording_date': block[0].rec_datetime,
             'sampling_rate': block[0].segments[0].analogsignals[0].sampling_rate,
             'time': t,
             'channel1': channel1,
