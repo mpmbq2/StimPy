@@ -1,5 +1,7 @@
-import theano as th
+from theano import function, tensor
 import numpy as np
+from .utils import rolling_window
+
 
 def _epsc_template(points=None):
     '''
@@ -29,10 +31,10 @@ def _ipsc_template(points=None):
             1-D numpy array of length (points) containing the epsc waveform
         '''
 
-    if points == None
-        points = 100
+    if points == None:
+        points = 300
     time = np.linspace(1, points, num=points)
-    temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 30) for t in time])
+    temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 50) for t in time])
     return -temp
 
 
@@ -48,30 +50,56 @@ def detection(trace, template=None):
         Indices of detected events
     '''
 
-    if template == None:
-        template = 'epsc'
+    if template is None:
+        temp = 'epsc'
 
     if template == 'epsc':
-        temp = _epsc_template(points=None)
+        temp = _epsc_template(points=100)
 
     if template == 'ipsc':
-        temp = _ipsc_template(points=None)
+        temp = _ipsc_template(points=300)
 
-    def rolling_window(a, window):
-        shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
-        strides = a.strides + (a.strides[-1],)
-        return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-
+    detection_threshold = []
     windows = rolling_window(trace, len(temp))
-    detection_threshold = np.empty(trace.shape)
+    detection_function = TensorDetect()
+    print("Window shape: {0}".format(windows.shape))
+    print("Template shape: {0}".format(temp.shape))
 
     for idx, data in enumerate(windows):
-        scale = (np.sum((temp * data)) - np.sum(temp) * (np.sum(data)/len(temp)))/(np.sum((temp**2)) - np.sum(temp) * (np.sum(temp)/len(temp)))
-        offset = (np.sum(data) - scale * np.sum(temp))/len(temp)
-        fitted = temp * scale + offset
-        sse = np.sum((data - fitted)**2)
-        error = (sse/(len(temp)-1))**1/2
-        detection_threshold[idx] = scale/error
+        #print(idx)
+        #print(data.shape)
+        detection_threshold.append(detection_function.detect(data, temp))
+
+    return detection_threshold
 
 
-def extraction(trace, event_indicies):
+class TensorDetect:
+
+    def __init__(self):
+        data = tensor.dvector('data')
+        template = tensor.dvector('template')
+
+        scale = ((template * data).sum() - template.sum() * (data.sum() / template.shape[0])) / (
+            (template ** 2.0).sum() - template.sum() * (template.sum() / template.shape[0]))
+        self.scale_fn = function([data, template], scale)
+
+        offset = (data.sum() - scale * template.sum()) / template.shape[0]
+        self.offset_fn = function([data, template], offset)
+
+        fit = template * scale + offset
+        self.fit_fn = function([scale, template, offset], fit)
+
+        error = (((data - fit)**2.0).sum()) / ((template.shape[0] - 1)**1/2)
+        self.error_fn = function([data, fit, template], error)
+
+        detection_threshold = scale / error
+        self.detection_fn = function([scale, error], detection_threshold)
+
+    def detect(self, data, template):
+
+        scale = self.scale_fn(data, template)
+        offset = self.offset_fn(data, template)
+        fit = self.fit_fn(scale, template, offset)
+        error = self.error_fn(data, fit, template)
+
+        return self.detection_fn(scale, error)
