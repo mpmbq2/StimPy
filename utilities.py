@@ -49,7 +49,28 @@ def multi_baseline():
     point, and latency cursors to be set at the second baseline point. It will 
     return a new window with the region between the cursors, proportionally
     baselined. 
-    i.e. it takes the difference between the first and second baseline, and 
-    then baselines every point with a weighted subtraction
+    i.e. it interpolates a straight line between the two baseline points, which is then subtracted from the trace
     """
-    pass
+    # Get data
+    trace = stf.get_trace()
+    # Define baselines
+    baseline_start = (int(stf.get_base_start()), int(stf.base_fit_end()))
+    baseline_end = (int(stf.get_fit_start()), int(stf.get_fit_end()))
+    # Set middle region to NaN
+    trace[baseline_start[1]:baseline_end[0]] = [np.nan for _ in trace[baseline_start[1]:baseline_end[0]]]
+    # Find all non-NaN values
+    not_nan = np.logical_not(np.isnan(trace))
+    # Create indices for full trace
+    indices = np.arange(len(trace))
+    # Create interpolation function
+    interp = interpolate.interp1d(indices[not_nan], trace[not_nan], kind='linear')
+    # Interpolate the line and fit the data with a line
+    interp_trace = interp(indices)
+    line = np.polyfit(indices, trace, 1)
+    # Subtract the line
+    trace = trace - line
+    # Make new window and return trace
+    stf.new_window(trace)
+
+    return trace
+
