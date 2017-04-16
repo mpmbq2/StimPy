@@ -5,7 +5,7 @@ import stf
 
 def blank_artifact(method='cubic'):
     """
-    This function requires the latency cursors to be set. It corrects the 
+    This function requires the fit cursors to be set. It corrects the 
     artifact located between the cursors based on the method specified by the 
     user. 
     
@@ -26,7 +26,7 @@ def blank_artifact(method='cubic'):
     # Get data
     trace = stf.get_trace()
     # Define artifact
-    artifact = (int(stf.get_latency_start()), int(stf.get_latency_end()))
+    artifact = (int(stf.get_fit_start()), int(stf.get_fit_end()))
     # Set artifact region to NaN
     trace[artifact[0]:artifact[1]] = [np.nan for _ in trace[artifact[0]:artifact[1]]]
     # Find all non-NaN values
