@@ -10,10 +10,35 @@ import .mini_utils as mu
 
 
 class MiniRec:
+    """
+    MiniRec is an object used to analyzing miniature EPSCs and IPSCs. It takes no arguments to start. On initialization,
+    It takes the selected traces and stores them as MiniRec.traces. The workflow from there is as follows:
+    
+    MiniRec.cut(point) cuts the trace at the given point and returns it in a new window
+    
+    MiniRec.filter() filters the data to make mini extraction more accurate
+    
+    MiniRec.detect(method) detects mini events using the method specified (either derivative or template-match). This
+    method concludes by returning the detected minis in a new window. It also creates a dataframe (mini_df) to store
+    The information concerning each detected mini (i.e. event number, trace, and index). This allows to easier analysis
+    in the future.
+    
+    MiniRec.select() is called AFTER the user has gone through the minis to select which should be kept for further 
+    analysis. The select method iterates over detected minis in mini_df and appends True or False to the row depending
+    on whether the user chose to include that mini or not.
+    
+    MiniRec.plot_decay() computes all of the relevant parameters on the selected minis (half-width, decay time, peak)
+    and plots them for manual inspection. It also plots vertical and horizontal lines at the default cutoffs for
+    clustering IPSCs from EPSCs (decay of 5 ms) and minis from spontaneous (-50 pA) Using a peak cutoff is not 
+    recommended as the way to display peak data will be with cumulative probability plots, so mini vs spontaneous
+    activity is not terribly relevant.
+    
+    MiniRec.classify() 
+    """
     def __init__(self):
     
         self.selected_traces = stf.get_selected_indices()
-        self.traces = [stf.get_trace(x) for x in self.selected_traces]
+        self.traces = np.array([stf.get_trace(x) for x in self.selected_traces])
         self.fs = stf.get_sampling_interval()
         self.cut_traces = []
         self.mini_traces = None
@@ -21,7 +46,7 @@ class MiniRec:
         self.interevent_interval = []
         self.event_count = 0
         self.cumulative_time = 0
-        self.cluster_df = pd.DataFrame
+        self.cluster_df = pd.DataFrame()
     
     def cut(self, point):
     
@@ -40,6 +65,7 @@ class MiniRec:
             b, a = signal.bessel(5, rad_samp)
         else:
         	print("Filter {0} not implemented".format(ftype))
+            pass
         
         self.traces = signal.filtfilt(b, a, self.traces)
         stf.new_window_matrix(self.traces)
@@ -53,10 +79,11 @@ class MiniRec:
         
         if method == 'template match':
             # Create detection function and template
+            # TODO: Allow for selection of both epsc and ipsc templates
             detection_function = mu.TensorDetect()
-            if template == 'epsc':
+            if template_type == 'epsc':
                 temp = mu._epsc_template(points=150)
-            elif template == 'ipsc':
+            elif template_type == 'ipsc':
                 temp = mu._ipsc_template(points=300)
             # Define holder, make windows, predefine detection function
             for i in self.selected_traces:
@@ -100,7 +127,7 @@ class MiniRec:
             self.mini_df = pd.DataFrame(mini_indices)
             
             
-        if method == 'derivative':
+        elif method == 'derivative':
             # Loop through selected traces
             for i in self.selected_traces:
                 # Initialize within-loop variables
@@ -231,12 +258,13 @@ class MiniRec:
         ax.scatter(self.mini_df['Peak'], self.mini_df['Decay Time'])
         ax.set_xlabel("Peak")
         ax.set_ylabel("Decay Time (ms)")
+        plt.axhline(5)
+        plt.axvline(-50)
         plt.show()
     
-    def classify_minis(self, 
-                        category=['peak', 'decay'],
-                        cutoff={'Peak': -50, 'Decay': 5}):
-        #Create holding lists
+    def classify(self, category=['peak', 'decay'], cutoff={'Peak': -50, 'Decay': 5}):
+        # TODO: Fix mutable arguments. Set to None by default, then have function alter values if None
+        # Create holding lists
         transmitter = []
         mini_spont = []
         # If classifying by peak is desired
