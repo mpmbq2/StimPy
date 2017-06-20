@@ -12,7 +12,7 @@ def blank_artifact(method='cubic'):
     :: Params ::
     
     method = ['zero', 'linear', 'quad', 'cubic']
-        -'zero' replaces the artifact with zeros
+        -'zero' replaces the artifact with zeros (Not supported yet)
         
         -'linear' replaces the artifact with a line connecting the two points at 
         either end
@@ -22,6 +22,8 @@ def blank_artifact(method='cubic'):
     :: Output ::
     
     A new window with the blanked data
+    
+    trace: The corrected trace
     """
     # Get data
     trace = stf.get_trace()
@@ -34,7 +36,17 @@ def blank_artifact(method='cubic'):
     # Create indices for full trace
     indices = np.arange(len(trace))
     # Create interpolation function
-    interp = interpolate.interp1d(indices[not_nan], trace[not_nan], kind=method)
+    # The next line with interp1d fails by essentially consuming all RAM in a fraction of a second
+    # interp = interpolate.interp1d(indices[not_nan], trace[not_nan], kind=method)
+    # Replace interp1d with interpolate.InterpolatedUnivariateSpline
+    if method == 'cubic':
+        k = 3
+    elif method == 'quad':
+        k = 2
+    elif method == 'linear':
+        k = 1
+    interp = interpolate.InterpolatedUnivariateSpline(indices[not_nan], trace[not_nan], k=3)
+    # TODO: Add ability to use zero instead of linear
     # Replace trace with interpolated trace
     trace = interp(indices)
     # Make new window and return trace
