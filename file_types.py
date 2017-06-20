@@ -2,6 +2,8 @@ import numpy as np
 from scipy.signal import signal
 from neo.io import AxonIO
 import pandas as pd
+import StimPy.stio as stio
+import StimPy as sp
 
 # TODO: Implement Neo base class inheritance
 class MiniFile(neo.NeoBase):
@@ -32,7 +34,7 @@ class MiniFile(neo.NeoBase):
 
         reader = neo.AxonIO(file_name)
         self.original_data = reader.read_segment()
-        self.working_data = sp.read_neo(self.original_data)
+        self.working_data = sp.stio.read_neo(self.original_data)
 
     def filter(self, freq=1000, type=None):
         '''This method filters the self.working_data attribute to produce more reliable detection.
