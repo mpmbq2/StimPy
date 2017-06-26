@@ -76,7 +76,8 @@ class MiniRec:
     def detect(self,
         method='template match',
         template_type='epsc',
-        threshold=4):
+        threshold=4,
+        channel='channel1'):
 
         # Predefine universal variables
         mini_traces = []
@@ -90,41 +91,29 @@ class MiniRec:
                 temp = mu._epsc_template(points=150)
             elif template_type == 'ipsc':
                 temp = mu._ipsc_template(points=300)
-            # Define holder, make windows, predefine detection function
-            for i in self.working_data['channel1']:
+            # call to detect
+            detector = detect.template_match(detection_function, self.working_data[channel], temp)
 
-                # Get trace, define holder, and make windows
-                trace = i
-                detection_threshold = []
-                windows = mu.rolling_window(trace, len(temp))
-
-                # Make detection trace
-                for idx, data in enumerate(windows):
-                    detection_threshold.append(detection_function.detect(data, temp))
-
-                # Add length to time tracker
-                self.cumulative_time = self.cumulative_time + len(trace)
-
-                # While-loop for iterating over the whole trace looking for events
-                idx = 150
-                while idx < (len(detection_threshold)-401):
-                    # Check to see if threshold is crossed -Broken
-                    # Returns ValueError because "truth value of an array with more than one element is ambiguous"
-                    # TODO: re-implement this loop
-                        # 1) Mask the detection trace for values greater than threshold
-                        # 2) Set detection trace values not True in mask to be 0
-                        # 3) Find peaks with peakutils
-                    if detection_threshold[idx] >= threshold:
-                        # If crossed, extract information
-                        mini_indices.append({'event_number': self.event_count,
-                                                    'trace': i,
-                                                    'index': idx})
-                        mini_traces.append(trace[idx-150:idx+400])
-                        self.event_count += 1
-                        # Advance by 150 samples
-                        idx += 150
-                    else:
-                        idx += 1
+            # While-loop for iterating over the whole trace looking for events
+            idx = 150
+            while idx < (len(detection_threshold)-401):
+                # Check to see if threshold is crossed -Broken
+                # Returns ValueError because "truth value of an array with more than one element is ambiguous"
+                # TODO: re-implement this loop
+                    # 1) Mask the detection trace for values greater than threshold
+                    # 2) Set detection trace values not True in mask to be 0
+                    # 3) Find peaks with peakutils
+                if detection_threshold[idx] >= threshold:
+                    # If crossed, extract information
+                    mini_indices.append({'event_number': self.event_count,
+                                                'trace': i,
+                                                'index': idx})
+                    mini_traces.append(trace[idx-150:idx+400])
+                    self.event_count += 1
+                    # Advance by 150 samples
+                    idx += 150
+                else:
+                    idx += 1
 
             self.mini_traces = np.asarray(mini_traces)
 
@@ -134,10 +123,10 @@ class MiniRec:
 
         elif method == 'derivative':
             # Loop through selected traces
-            for i in self.working_data['channel1']:
+            for i in self.working_data[channel]:
 
                 # Get trace and compute derivative in pA/ms
-                trace = self.working_data['channel1'][i]
+                trace = i
                 deriv = np.diff(trace) / 0.01
 
                 # Add length to time tracker
