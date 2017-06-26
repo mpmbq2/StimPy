@@ -14,7 +14,9 @@ def _epsc_template(points=None):
     if points is None:
         points = 100
     time = np.linspace(1, points, num=points)
-    temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 8) for t in time])
+    temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 10) for t in time])
+    baseline = np.zeros(15)
+    temp = np.insert(temp, 0, baseline)
     return -temp
 
 
@@ -29,9 +31,11 @@ def _ipsc_template(points=None):
         '''
 
     if points == None:
-        points = 300
+        points = 500
     time = np.linspace(1, points, num=points)
-    temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 50) for t in time])
+    temp = np.array([(1 - np.exp(-(t - time[0]) / 1.0)) * np.exp(-(t - time[0]) / 60) for t in time])
+    baseline = np.zeros(15)
+    temp = np.insert(temp, 0, baseline)
     return -temp
 
 
@@ -83,8 +87,13 @@ class TensorDetect:
         data = tensor.dvector('data')
         template = tensor.dvector('template')
 
-        scale = ((template * data.T) - template.sum() * (data.sum() / template.shape[0])) / (
-            (template ** 2.0).sum() - template.sum() * (template.sum() / template.shape[0]))
+        scale = (
+            tensor.dot(template, data) - template.sum() * (
+            data.sum() / template.shape[0])
+            ) / (
+            (template ** 2.0).sum() - template.sum() * (
+            template.sum() / template.shape[0])
+            )
         self.scale_fn = function([data, template], scale)
 
         offset = (data.sum() - scale * template.sum()) / template.shape[0]
@@ -99,7 +108,7 @@ class TensorDetect:
         detection_threshold = scale / error
         self.detection_fn = function([scale, error], detection_threshold)
 
-    def detect(self, data, template):
+    def detect(self, data, template=None):
 
         scale = self.scale_fn(data, template)
         offset = self.offset_fn(data, template)
