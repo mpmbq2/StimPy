@@ -1,23 +1,25 @@
 import numpy as np
-from scipy.signal import signal
+from scipy import signal
 from neo.io import AxonIO
+from neo.core import Block
 import pandas as pd
 import StimPy.stio as stio
 import StimPy as sp
 
-# TODO: Implement Neo base class inheritance
-class MiniFile(neo.NeoBase):
+
+
+class MiniFile:
     '''This is a container object for miniPSC file analysis
-    
+
     It works in the order Open -> Filter -> Extract -> View -> Save
-    
+
     This object should be instantiated by the sp.file_open function
-    
+
     It is a subclass of a Neo file object, so it has all the functionality of
         Neo objects, such as quantities, etc.
-    
+
     The filter step takes frequency and type arguments. Type specifies the filter type
-    
+
     Extract performs the mini detection algorithm, which finds events that exceed a user defined threshold
         using a user-defined function. By default this is the template match algo. Minis that fall outside of user-defined
         cutoffs are excluded.
@@ -30,11 +32,12 @@ class MiniFile(neo.NeoBase):
 
     '''
 
-    def __init__(self, file_name):
+    def __init__(self, filename):
 
-        reader = neo.AxonIO(file_name)
-        self.original_data = reader.read_segment()
-        self.working_data = sp.stio.read_neo(self.original_data)
+        self.path = path
+        # reader = AxonIO(filename=path)
+        # self.neo_data = reader.read()
+        self.working_data = stio.read_neo(self.path)
 
     def filter(self, freq=1000, type=None):
         '''This method filters the self.working_data attribute to produce more reliable detection.
@@ -48,21 +51,26 @@ class MiniFile(neo.NeoBase):
 
         # Create filter
         # TODO: Write actual filter function
+        Wn = freq/10000
         order = 4
-        a, b = signal.signal.bessel(freq, order)
+        b, a = signal.bessel(order, Wn)
         # Filter working data
-        self.working_data = signal.filtfilt(self.working_data, a, b)
+        self.working_data['channel1'] = signal.filtfilt(b, a, self.working_data['channel1'])
+        self.working_data['channel2'] = signal.filtfilt(b, a, self.working_data['channel2'])
 
-    def extract(self, threshold=4, method='template_match'):
+        return True
+
+    def extract(self, threshold=4, method='template_match', channel=1):
         '''This method extracts mPSCs from the self.working_data attribute.
         ::Params::
         threshold = This is the detection threshold for template correlation.
         method = The method to use for extracting minis.
+        channel = The channel to be used for detection
 
         ::Returns::
         Dictionary: Keys are 'Data', 'Minis', and 'Metadata'
         '''
-        
+
         # Extract minis
         # TODO: Write mini_detect function
         if method == 'template_match':
@@ -93,9 +101,8 @@ class MiniFile(neo.NeoBase):
 
         # Turn metadata into pandas dataframe
         extracted_meta = pd.DataFrame(extracted_meta)
-        
+
         return {'Data': self.working_data, 'Minis': minis, 'Metadata': extracted_meta}
 
     def reset_file(self):
-        
-        self.working_data = sp.read_neo(self.original_data)
+        self.working_data = stio.read_neo(self.path)

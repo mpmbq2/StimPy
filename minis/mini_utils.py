@@ -1,11 +1,9 @@
 from theano import function, tensor
 import numpy as np
-from .utils import rolling_window
 
 
 def _epsc_template(points=None):
     '''
-
     :param samplerate: float
         Sampling rate of the experiment. Default is 10 kHz.
     :param points: scalar
@@ -22,13 +20,12 @@ def _epsc_template(points=None):
 
 def _ipsc_template(points=None):
     '''
-
-        :param samplerate: float
-            Sampling rate of the experiment. Default is 10 kHz.
-        :param points: scalar
-            Desired size of the event. Default is 100 points
-        :return: ndarray
-            1-D numpy array of length (points) containing the epsc waveform
+    :param samplerate: float
+        Sampling rate of the experiment. Default is 10 kHz.
+    :param points: scalar
+        Desired size of the event. Default is 100 points
+    :return: ndarray
+        1-D numpy array of length (points) containing the epsc waveform
         '''
 
     if points == None:
@@ -44,11 +41,10 @@ def rolling_window(a, window):
     strides = a.strides + (a.strides[-1],)
 
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-    
+
 
 def detection(trace, template=None):
     '''
-
     :param trace: ndarray
         Voltage clamp signal to be analyzed
     :param template: string
@@ -87,7 +83,7 @@ class TensorDetect:
         data = tensor.dvector('data')
         template = tensor.dvector('template')
 
-        scale = ((template * data).sum() - template.sum() * (data.sum() / template.shape[0])) / (
+        scale = ((template * data.T) - template.sum() * (data.sum() / template.shape[0])) / (
             (template ** 2.0).sum() - template.sum() * (template.sum() / template.shape[0]))
         self.scale_fn = function([data, template], scale)
 
