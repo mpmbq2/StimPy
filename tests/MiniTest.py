@@ -5,8 +5,9 @@ from StimPy import minis
 import numpy as np
 import matplotlib.pyplot as plt
 
-file_path = '/home/matt/Data/patch_data/dnm1_ftfl/cortical/170425_170428/\
-170425/2017_04_25_0013.abf'
+#file_path = '/home/matt/Data/patch_data/dnm1_ftfl/cortical/170425_170428/\
+#170425/2017_04_25_0013.abf'
+file_path = '/home/matt/Data/patch_data/dyn1/170222/170221_0046.abf'
 
 recording = minis.MiniRec(file_path)
 

@@ -88,7 +88,7 @@ class TensorDetect:
         template = tensor.dvector('template')
 
         scale = (
-            tensor.dot(template, data) - template.sum() * (
+            (template * data).sum() - template.sum() * (
             data.sum() / template.shape[0])
             ) / (
             (template ** 2.0).sum() - template.sum() * (
