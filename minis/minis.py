@@ -57,7 +57,7 @@ class MiniRec:
         True if executed fully
         '''
 
-        rad_samp = freq / 10000.0
+        rad_samp = freq / (10000.0/2)
         if ftype == 'butter':
             b, a = signal.butter(4, rad_samp)
         elif ftype == 'bessel':
@@ -117,6 +117,31 @@ class MiniRec:
                 )
 
             return events
+
+        elif method == 'derivative':
+            # Loop through selected traces
+            for i in self.working_data[channel]:
+
+                # Get trace and compute derivative in pA/ms
+                trace = i[50000:]
+                deriv = np.diff(trace) / 0.01
+
+                # While-loop for iterating over the whole trace looking for events
+                idx = 150
+                while idx < (len(deriv)-401):
+                    # Check to see if threshold is crossed
+                    if deriv[idx] >= threshold:
+                        # If crossed, extract information
+                        # mini_indices.append({'event_number': self.event_count,
+                        #                             'trace': i,
+                        #                             'index': idx})
+                        mini_traces.append(trace[idx-150:idx+400])
+                        # Advance by 150 samples
+                        idx += 150
+                    else:
+                        idx += 1
+
+            return np.asarray(mini_traces)
             # Pull information on events
             #event_info =
 

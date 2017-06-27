@@ -14,7 +14,7 @@ def _epsc_template(points=None):
     if points is None:
         points = 100
     time = np.linspace(1, points, num=points)
-    temp = np.array([(1 - np.exp(-(t - time[0]) / 0.5)) * np.exp(-(t - time[0]) / 10) for t in time])
+    temp = np.array([(1 - np.exp(-(t - time[0]) / 0.3)) * np.exp(-(t - time[0]) / 10) for t in time])
     baseline = np.zeros(15)
     temp = np.insert(temp, 0, baseline)
     return -temp
