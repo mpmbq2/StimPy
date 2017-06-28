@@ -9,12 +9,11 @@ import peakutils
 from prygress import progress
 from multiprocessing import Pool
 from functools import partial
-import time
 
 
 def template_match(function, data, temp):
 
-    start = time.time()
+
     # Flatten data array
     original_shape = data.shape
     data = data.flatten()
@@ -33,21 +32,11 @@ def template_match(function, data, temp):
     print("Detector shape: {0}".format(detector.shape))
     print(np.max(detector))
     # TODO: Clean up comments. Lots of functions have been comented out.
-    # reshape data
-    # Don't need to reshape, because will just collapse again later
-    #detector = np.reshape(detector, original_shape)
-    #print("Detector reshaped: {0}".format(detector.shape))
-
-    end = time.time()
-    print("Elapsed time: {0}".format(end-start))
     return detector
 
 def find_events(detector, threshold=4):
 
     # Find peaks
-    # with Pool(processes=4) as pool:
-    #     function = partial(peakutils.peak.indexes, thres=0.001, min_dist=10)
-    #     peak_indices = pool.map(function, detector)
     temp_indices = peakutils.peak.indexes(detector, thres=0.0, min_dist=0)
     ct_indices = list()
     for idx in temp_indices:
@@ -72,3 +61,23 @@ def extract_events(data, indices):
         else:
             events.append(data[idx-100:idx+300])
     return np.array(events)
+
+def parameters(events):
+    '''
+    Given an array of synaptic events, returns parameters of those events.
+    Optionally, it excludes events based on predefined terms.
+
+    Flow:
+        Events are baselined using first 100 points and peakutils.baseline
+            with deg=1 or deg=2.
+        Baselined events are checked for max derivative in [50:150].
+            If they fall below cutoff, append False to deriv_acceptance list.
+        Filtered events are checked for peak amplitude in [50:150]. If less than
+            10 pA, drop (append False to list).
+        Events filtered on risetime
+        Events filtered on decay time
+    Returns:
+        Dictionary containing only filtered events and a DataFrame describing
+            them.
+    '''
+    pass

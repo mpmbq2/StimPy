@@ -80,6 +80,8 @@ class MiniRec:
         threshold=4,
         channel='channel1'):
 
+        # Start timer
+        start = time.time()
         # Predefine universal variables
         mini_traces = []
         mini_indices = []
@@ -93,8 +95,6 @@ class MiniRec:
             elif template_type == 'ipsc':
                 temp = mu._ipsc_template(points=300)
             # call to detect
-            print("Signal shape: {0}".format(self.working_data[channel].shape))
-            print("Template shape: {0}".format(temp.shape))
             print("Matching template")
             detector = detect.template_match(
                 detection_function,
@@ -116,20 +116,13 @@ class MiniRec:
                 event_indices
                 )
 
-            return events
-            # Pull information on events
-            #event_info =
+            end = time.time()
+            print("Elapsed detection time: {0}".format(end-start))
 
-            # While-loop for iterating over the whole trace looking for events
-        #     idx = 150
-        #     while idx < (len(detector)-401):
-        #         # Check to see if threshold is crossed -Broken
-        #         # Returns ValueError because "truth value of an array with
-        #         # more than one element is ambiguous"
-        #         # TODO: re-implement this loop
-        #             # 1) Mask the detection trace for values greater than threshold
-        #             # 2) Set detection trace values not True in mask to be 0
-        #             # 3) Find peaks with peakutils
+            return events
+            # TODO: Pull information on events and exclude
+            #event_parameters = detect.parameters(events)
+
         #         if detector[idx] >= threshold:
         #             # If crossed, extract information
         #             mini_indices.append({'event_number': self.event_count,
