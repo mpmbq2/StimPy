@@ -5,6 +5,7 @@ from neo.core import Block
 import pandas as pd
 import StimPy.stio as stio
 import StimPy as sp
+import os
 
 
 
@@ -32,12 +33,13 @@ class MiniFile:
 
     '''
 
-    def __init__(self, filename):
+    def __init__(self, path):
 
-        self.path = path
+        self.path = path.split('/')[:-1]
+        self.filename = path.split('/')[-1]
         # reader = AxonIO(filename=path)
         # self.neo_data = reader.read()
-        self.working_data = stio.read_neo(self.path)
+        self.working_data = stio.read_neo(os.path.join(self.path, self.filename))
 
     def filter(self, freq=1000, type=None):
         '''This method filters the self.working_data attribute to produce more reliable detection.
